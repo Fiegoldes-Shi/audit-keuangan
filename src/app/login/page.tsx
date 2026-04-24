@@ -33,7 +33,13 @@ export default function Login() {
       }
     } else {
       // LOGIKA DAFTAR (SIGNUP)
-      const { data, error } = await supabase.auth.signUp({ email, password })
+      const { data, error } = await supabase.auth.signUp({ 
+        email, 
+        password,
+        options: {
+          data: { full_name: nama } // Menyimpan nama ke metadata bawaan Auth
+        }
+      })
       
       if (error) {
         setPesan({ error: 'Gagal mendaftar. Pastikan email valid dan sandi minimal 6 karakter.', sukses: '' })
@@ -43,12 +49,17 @@ export default function Login() {
         setPesan({ error: 'Email ini sudah terdaftar. Silakan gunakan mode "Masuk".', sukses: '' })
       } 
       else if (data.user) {
-        // Simpan nama ke tabel profiles jika benar-benar akun baru
-        await supabase.from('profiles').upsert({ 
+        // SIMPAN NAMA: Masukkan data awal ke tabel profiles
+        const { error: profileError } = await supabase.from('profiles').upsert({ 
           id: data.user.id, 
-          nama: nama || 'Mahasiswa',
+          nama: nama,
           pendapatan_tetap: 0 
         })
+
+        if (profileError) {
+          console.error("Gagal membuat profil:", profileError.message)
+        }
+
         setPesan({ error: '', sukses: 'Pendaftaran berhasil! Silakan cek kotak masuk/spam email kamu untuk verifikasi.' })
       }
       setIsLoading(false)
@@ -94,7 +105,7 @@ export default function Login() {
                 onChange={(e) => setNama(e.target.value)}
                 placeholder="Contoh: Budi"
                 className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 outline-none focus:border-teal-500 transition-all"
-                required={!isLoginMode}
+                required={!isLoginMode} // Wajib diisi hanya saat mode daftar
               />
             </div>
           )}
@@ -107,7 +118,7 @@ export default function Login() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="mahasiswa@kampus.ac.id"
               className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 outline-none focus:border-teal-500 transition-all"
-              required
+              required // Selalu wajib
             />
           </div>
           
@@ -119,13 +130,14 @@ export default function Login() {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Minimal 6 karakter"
               className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 outline-none focus:border-teal-500 transition-all"
-              required
+              required // Selalu wajib
             />
           </div>
 
+          {/* Posisi Lupa Sandi yang elegan di bawah kolom password */}
           {isLoginMode && (
             <div className="flex justify-end mt-1 mb-2">
-              <button type="button" onClick={handleLupaSandi} className="text-xs text-teal-600 hover:text-teal-700 font-medium">
+              <button type="button" onClick={handleLupaSandi} className="text-xs text-teal-600 hover:text-teal-700 font-medium transition-colors">
                 Lupa Kata Sandi?
               </button>
             </div>
