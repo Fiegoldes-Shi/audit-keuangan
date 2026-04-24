@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import { createClient } from '@/lib/supabaseBrowser'
 
 export default function Login() {
@@ -15,46 +14,50 @@ export default function Login() {
   const [pesanError, setPesanError] = useState('')
   const [pesanSukses, setPesanSukses] = useState('')
 
-  // Fungsi untuk Mendaftar (Sign Up)
   const handleDaftar = async (e: React.FormEvent) => {
     e.preventDefault()
-    setIsLoading(true)
-    setPesanError('')
-    setPesanSukses('')
+    setIsLoading(true); setPesanError(''); setPesanSukses('');
 
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-    })
+    const { error } = await supabase.auth.signUp({ email, password })
 
-    if (error) {
-      setPesanError('Gagal mendaftar. Pastikan format email benar dan sandi minimal 6 karakter.')
-    } else {
-      setPesanSukses('Pendaftaran berhasil! Silakan cek email kamu untuk verifikasi, lalu coba masuk.')
-    }
+    if (error) setPesanError('Gagal mendaftar. Pastikan email valid dan sandi minimal 6 karakter.')
+    else setPesanSukses('Pendaftaran berhasil! Silakan cek email kamu untuk verifikasi.')
     setIsLoading(false)
   }
 
-  // Fungsi untuk Masuk (Sign In)
   const handleMasuk = async (e: React.FormEvent) => {
     e.preventDefault()
-    setIsLoading(true)
-    setPesanError('')
-    setPesanSukses('')
+    setIsLoading(true); setPesanError(''); setPesanSukses('');
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
 
     if (error) {
       setPesanError('Email atau kata sandi tidak cocok. Silakan coba lagi.')
       setIsLoading(false)
     } else {
-      // Jika sukses, langsung arahkan ke Dashboard
       router.push('/')
       router.refresh()
     }
+  }
+
+  // Fungsi Baru: Lupa Kata Sandi
+  const handleLupaSandi = async () => {
+    if (!email) {
+      setPesanError('Silakan ketik email kamu di kolom atas terlebih dahulu, lalu klik "Lupa Kata Sandi?".')
+      return
+    }
+    
+    setIsLoading(true); setPesanError(''); setPesanSukses('');
+
+    // Mengirim email reset dengan URL tujuan (redirect) ke halaman update-password
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/update-password`,
+    })
+
+    if (error) setPesanError('Gagal mengirim tautan reset. Pastikan email sudah terdaftar.')
+    else setPesanSukses('Tautan untuk mereset kata sandi telah dikirim ke email kamu.')
+    
+    setIsLoading(false)
   }
 
   return (
@@ -65,7 +68,6 @@ export default function Login() {
           <p className="text-sm text-slate-500">Kelola kantong digitalmu sekarang</p>
         </header>
         
-        {/* Notifikasi Pesan */}
         {pesanError && <div className="mb-4 p-3 bg-red-50 text-red-600 text-sm rounded-lg">{pesanError}</div>}
         {pesanSukses && <div className="mb-4 p-3 bg-teal-50 text-teal-700 text-sm rounded-lg">{pesanSukses}</div>}
 
@@ -78,23 +80,31 @@ export default function Login() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="mahasiswa@kampus.ac.id"
               className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all"
-              required
             />
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Kata Sandi</label>
+            <div className="flex justify-between items-center mb-1">
+              <label className="block text-sm font-medium text-slate-700">Kata Sandi</label>
+              {/* Tombol Lupa Sandi yang elegan */}
+              <button 
+                type="button" 
+                onClick={handleLupaSandi}
+                className="text-xs text-teal-600 hover:text-teal-700 font-medium"
+              >
+                Lupa Kata Sandi?
+              </button>
+            </div>
             <input 
               type="password" 
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Minimal 6 karakter"
               className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all"
-              required
             />
           </div>
 
-          <div className="flex flex-col gap-3 mt-2">
+          <div className="flex flex-col gap-3 mt-4">
             <button 
               onClick={handleMasuk}
               disabled={isLoading}
@@ -113,12 +123,6 @@ export default function Login() {
             </button>
           </div>
         </form>
-
-        <div className="mt-8 text-center">
-          <Link href="/" className="text-sm text-teal-600 hover:text-teal-700 font-medium">
-            ← Kembali ke Beranda
-          </Link>
-        </div>
       </div>
     </div>
   )
