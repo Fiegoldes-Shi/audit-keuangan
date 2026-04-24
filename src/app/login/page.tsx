@@ -8,7 +8,6 @@ export default function Login() {
   const router = useRouter()
   const supabase = createClient()
   
-  // State untuk menentukan apakah sedang di mode Login atau Daftar
   const [isLoginMode, setIsLoginMode] = useState(true) 
   
   const [nama, setNama] = useState('')
@@ -26,7 +25,7 @@ export default function Login() {
       // LOGIKA MASUK (LOGIN)
       const { error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) {
-        setPesan({ error: 'Email atau kata sandi salah.', sukses: '' })
+        setPesan({ error: 'Email atau kata sandi salah. Silakan periksa kembali.', sukses: '' })
         setIsLoading(false)
       } else {
         router.push('/')
@@ -37,15 +36,20 @@ export default function Login() {
       const { data, error } = await supabase.auth.signUp({ email, password })
       
       if (error) {
-        setPesan({ error: 'Gagal mendaftar. Pastikan email belum terpakai dan sandi min. 6 karakter.', sukses: '' })
-      } else if (data.user) {
-        // Simpan nama ke tabel profiles
+        setPesan({ error: 'Gagal mendaftar. Pastikan email valid dan sandi minimal 6 karakter.', sukses: '' })
+      } 
+      // CEK EMAIL GANDA: Jika identities kosong, berarti email sudah terdaftar
+      else if (data.user && data.user.identities && data.user.identities.length === 0) {
+        setPesan({ error: 'Email ini sudah terdaftar. Silakan gunakan mode "Masuk".', sukses: '' })
+      } 
+      else if (data.user) {
+        // Simpan nama ke tabel profiles jika benar-benar akun baru
         await supabase.from('profiles').upsert({ 
           id: data.user.id, 
           nama: nama || 'Mahasiswa',
           pendapatan_tetap: 0 
         })
-        setPesan({ error: '', sukses: 'Pendaftaran berhasil! Cek email untuk verifikasi.' })
+        setPesan({ error: '', sukses: 'Pendaftaran berhasil! Silakan cek kotak masuk/spam email kamu untuk verifikasi.' })
       }
       setIsLoading(false)
     }
@@ -60,7 +64,7 @@ export default function Login() {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/update-password`,
     })
-    if (error) setPesan({ error: 'Gagal mengirim tautan. Pastikan email terdaftar.', sukses: '' })
+    if (error) setPesan({ error: 'Gagal mengirim tautan. Pastikan email memang terdaftar.', sukses: '' })
     else setPesan({ error: '', sukses: 'Tautan reset sandi telah dikirim ke email kamu.' })
     setIsLoading(false)
   }
@@ -81,7 +85,6 @@ export default function Login() {
         {pesan.sukses && <div className="mb-4 p-3 bg-teal-50 text-teal-700 text-sm rounded-lg">{pesan.sukses}</div>}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Kolom Nama hanya muncul saat mode Daftar */}
           {!isLoginMode && (
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Nama Panggilan</label>
@@ -90,7 +93,7 @@ export default function Login() {
                 value={nama}
                 onChange={(e) => setNama(e.target.value)}
                 placeholder="Contoh: Budi"
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 outline-none focus:border-teal-500"
+                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 outline-none focus:border-teal-500 transition-all"
                 required={!isLoginMode}
               />
             </div>
@@ -103,7 +106,7 @@ export default function Login() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="mahasiswa@kampus.ac.id"
-              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 outline-none focus:border-teal-500"
+              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 outline-none focus:border-teal-500 transition-all"
               required
             />
           </div>
@@ -115,12 +118,11 @@ export default function Login() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Minimal 6 karakter"
-              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 outline-none focus:border-teal-500"
+              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 outline-none focus:border-teal-500 transition-all"
               required
             />
           </div>
 
-          {/* Posisi Lupa Sandi di bawah kolom sandi */}
           {isLoginMode && (
             <div className="flex justify-end mt-1 mb-2">
               <button type="button" onClick={handleLupaSandi} className="text-xs text-teal-600 hover:text-teal-700 font-medium">
@@ -130,7 +132,7 @@ export default function Login() {
           )}
 
           <div className="pt-2">
-            <button type="submit" disabled={isLoading} className="w-full bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg px-4 py-3.5 shadow-sm transition-colors">
+            <button type="submit" disabled={isLoading} className="w-full bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg px-4 py-3.5 shadow-sm transition-colors disabled:opacity-70">
               {isLoading ? 'Memproses...' : (isLoginMode ? 'Masuk' : 'Daftar Sekarang')}
             </button>
           </div>
