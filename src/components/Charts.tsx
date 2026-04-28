@@ -96,13 +96,15 @@ export function Charts({ transactions }: ChartsProps) {
                 outerRadius={80}
                 paddingAngle={5}
                 dataKey="value"
+                nameKey="name"
+                label={false}
               >
-                {pieData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.fill} />
+                {pieData.map((entry) => (
+                  <Cell key={entry.name} fill={entry.fill} />
                 ))}
               </Pie>
               <Tooltip 
-                formatter={(value: number) => formatRupiah(value)}
+                formatter={(value: unknown) => formatRupiah(Number(value))}
                 contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontSize: '12px' }}
               />
             </PieChart>
@@ -135,7 +137,7 @@ export function Charts({ transactions }: ChartsProps) {
                 tickFormatter={(val) => `Rp${(val/1000)}k`}
               />
               <Tooltip 
-                formatter={(value: number) => formatRupiah(value)}
+                formatter={(value: unknown) => formatRupiah(Number(value))}
                 cursor={{ fill: '#f8fafc' }}
                 contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontSize: '12px' }}
               />
