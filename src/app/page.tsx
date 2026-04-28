@@ -4,8 +4,9 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabaseBrowser'
 import { Charts, Transaction } from '@/components/Charts'
 
+const supabase = createClient()
+
 export default function Dashboard() {
-  const supabase = createClient()
   const [namaUser, setNamaUser] = useState('')
   const [pendapatanTetap, setPendapatanTetap] = useState(0)
   const [transactions, setTransactions] = useState<Transaction[]>([])

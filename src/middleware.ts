@@ -1,9 +1,11 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 
+const PUBLIC_PATHS = ['/login', '/update-password']
+
 export async function middleware(request: NextRequest) {
-  // LOG DETEKTIF: Akan muncul di Vercel Logs
-  console.log("Middleware mengecek path:", request.nextUrl.pathname);
+  const { pathname } = request.nextUrl
+  const isPublicPath = PUBLIC_PATHS.some(p => pathname.startsWith(p))
 
   let supabaseResponse = NextResponse.next({ request })
 
@@ -26,15 +28,13 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
-  // Jika tidak ada user dan tidak sedang di halaman login -> tendang ke login
-  if (!user && !request.nextUrl.pathname.startsWith('/login')) {
-    console.log("User tidak ditemukan, redirect ke /login");
+  // Belum login, akses halaman protected -> tendang ke /login
+  if (!user && !isPublicPath) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  // Jika sudah login tapi mau ke login -> balikin ke dashboard
-  if (user && request.nextUrl.pathname.startsWith('/login')) {
-    console.log("User sudah login, redirect ke beranda");
+  // Sudah login, akses /login -> balikin ke dashboard
+  if (user && pathname.startsWith('/login')) {
     return NextResponse.redirect(new URL('/', request.url))
   }
 
